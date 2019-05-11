@@ -1,0 +1,1 @@
+This is a set of C++ libraries for the client and server side of an SRP login without generating a key for encryption. Included are module and integration tests.
