@@ -11,7 +11,7 @@ jni_lib:
 	@g++ -fPIC -I"$(JAVA_HOME)/include/" -I"$(JAVA_HOME)/include/darwin" -L"../cpp" -I"../cpp" -dynamiclib -lgmp -lsodium -o $(LIB_NAME) com_stock_client_login_ClientBridge.cpp ../cpp/client_login.cpp
 
 test:
-	javac com/stock_client_login/ClientBridgeTest.java
+	@javac com/stock_client_login/ClientBridgeTest.java
 
 clean:
 	@rm -rf *~ com/stock_client_login/*.class liblogin_client.dylib com/stock_client_login/*~
