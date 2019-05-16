@@ -9,7 +9,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-const int NUM_TESTS = 100;
+const int NUM_TESTS = 2;
 
 int compare_hex(unsigned char str1[], unsigned char str2[], size_t size) {
   for (int i = 0; i < size; ++i) {
@@ -99,7 +99,7 @@ int connect_server() {
       printf("Failed to create socket\n%s\n", strerror(errno));
       return 1;
     }
-    if((server = gethostbyname("127.0.0.1")) == NULL) {
+    if((server = gethostbyname("192.168.99.100")) == NULL) {
       printf("Failed to find the server\n%s\n", strerror(errno));
       return 1;
     }
