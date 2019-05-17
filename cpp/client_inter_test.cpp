@@ -5,9 +5,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <errno.h>
+#include <unistd.h>
 
 const int NUM_TESTS = 2;
 
@@ -90,7 +93,7 @@ int test_client(int fd, int thread_num) {
   return 0;
 }
 
-int connect_server() {
+int connect_server(const char* ip) {
   int serverfds[NUM_TESTS];
   struct sockaddr_in address;
   struct hostent* server;
@@ -99,7 +102,7 @@ int connect_server() {
       printf("Failed to create socket\n%s\n", strerror(errno));
       return 1;
     }
-    if((server = gethostbyname("192.168.99.100")) == NULL) {
+    if((server = gethostbyname(ip)) == NULL) {
       printf("Failed to find the server\n%s\n", strerror(errno));
       return 1;
     }
@@ -116,7 +119,7 @@ int connect_server() {
       return 1;
     }
   }
-  
+
   std::vector<std::thread> threads;
   for (int i = 0; i < NUM_TESTS; ++i) {
     threads.emplace_back(test_client, serverfds[i], i);
@@ -132,6 +135,11 @@ int main(int argc, char** argv) {
     printf("Failed to init client library\n");
     return 1;
   }
+
+  if (argc != 2) {
+    printf("Invalid number of arguments\n");
+    return 1;
+  }
   
-  return connect_server();
+  return connect_server(argv[1]);
 }

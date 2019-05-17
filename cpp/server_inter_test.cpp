@@ -5,9 +5,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <errno.h>
+#include <unistd.h>
 
 const int NUM_TESTS = 100;
 
