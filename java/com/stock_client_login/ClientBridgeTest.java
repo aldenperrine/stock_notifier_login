@@ -3,21 +3,26 @@ package com.stock_client_login;
 import java.io.*;
 import java.net.*;
 import java.util.Arrays;
+import java.nio.charset.*;
 
 public class ClientBridgeTest {
     public static void main(String[] args) {
 	System.out.println("Starting client test...");
 	ClientBridge.jni_init_client_lib();
   
-	int NUM_TESTS = 100;
+	int NUM_TESTS = 98;
 	TestThread[] threads = new TestThread[NUM_TESTS];
 	for (int i = 0; i < NUM_TESTS; ++i) {
 	    threads[i] = new TestThread();
 	    threads[i].start();
 	}
-	//for (int i = 0; i < NUM_TESTS; ++i) {
-	//    threads[i].join();
-	//}
+	for (int i = 0; i < NUM_TESTS; ++i) {
+	    try {
+		threads[i].join();
+	    } catch (Exception e) {
+		continue;
+	    }
+	}
     }
 
     private final static char[] hexArray = "0123456789abcdef".toCharArray();
@@ -39,7 +44,10 @@ class TestThread extends Thread {
 	    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 	    DataInputStream in = new DataInputStream(socket.getInputStream());
 	    
-	    
+	    String un = "username";
+	    byte[] user_bytes = un.getBytes(StandardCharsets.US_ASCII);
+	    byte[] null_byte = new byte[1];
+	    null_byte[0] = 0;
 	    String up = "username:password";
 	    int byteSize = ClientBridge.jni_lib_bytes_size();
 	    int hashSize = ClientBridge.jni_lib_hash_size();
@@ -49,7 +57,8 @@ class TestThread extends Thread {
 	    
 	    out.write(rvals.s, 0, byteSize);
 	    out.write(rvals.v, 0, byteSize);
-	    
+	    out.write(user_bytes, 0, user_bytes.length);
+	    out.write(null_byte, 0, 1);
 	    out.write(avals.A, 0, byteSize);
 	    
 
@@ -57,7 +66,7 @@ class TestThread extends Thread {
 	    in.readFully(B, 0, byteSize);
 
 
-	    VerificationValues vvals = ClientBridge.jni_generate_cs(up, avals.a, avals.A,
+	    VerificationValues vvals = ClientBridge.jni_generate_ck(un, up, avals.a, avals.A,
 						   B, rvals.s);
 	    
 	    out.write(vvals.m1, 0, hashSize);
@@ -69,7 +78,7 @@ class TestThread extends Thread {
 	
 	} catch (IOException e) {
 	    System.out.println("Caught an IOException");
-	    System.out.println(e.getStackTrace());
+	    System.out.println(e.getStackTrace().toString());
 	}
     }
 }

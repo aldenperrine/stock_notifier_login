@@ -12,7 +12,7 @@ public class ClientBridge {
 	System.out.println(jni_lib_hash_size());
 	RegistrationValues rvals = jni_generate_registration("Cats");
 	AValues avals = jni_generate_a();
-	VerificationValues vvals = jni_generate_cs("Cats", avals.a, avals.A, avals.A, rvals.s);
+	VerificationValues vvals = jni_generate_ck("Cats", "Cats", avals.a, avals.A, avals.A, rvals.s);
 	System.out.println(vvals.m2.length);
     }
 
@@ -20,6 +20,8 @@ public class ClientBridge {
 
     public static native int jni_lib_bytes_size();
 
+    public static native int jni_lib_key_size();
+    
     public static native int jni_lib_hash_size();
 
     public static native RegistrationValues jni_generate_registration(String user_pass);
@@ -27,7 +29,7 @@ public class ClientBridge {
     public static native AValues jni_generate_a();
     
     public static native VerificationValues 
-	jni_generate_cs(String user_pass, byte[] a,
+	jni_generate_ck(String username, String user_pass, byte[] a,
 			byte[] A, byte[] B, byte[] s);
     
     private final static char[] hexArray = "0123456789abcdef".toCharArray();
@@ -63,11 +65,13 @@ class AValues {
 }
 
 class VerificationValues {
-    public VerificationValues(byte[] m1i, byte[] m2i) {
+    public VerificationValues(byte[] cki, byte[] m1i, byte[] m2i) {
+	ck = cki;
 	m1 = m1i;
 	m2 = m2i;
     }
 
+    public byte[] ck;
     public byte[] m1;
     public byte[] m2;
 }

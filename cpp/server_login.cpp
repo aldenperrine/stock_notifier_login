@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <stdint.h>
+#include <string.h>
 #include <gmp.h>
 #include <sodium.h>
 
@@ -33,6 +34,7 @@ const int BYTES_SIZE = sizeof(prime);
 const int HASH_SIZE = 
   crypto_generichash_BYTES_MAX < BYTES_SIZE ? 
   crypto_generichash_BYTES_MAX : BYTES_SIZE;
+const int KEY_SIZE = 32;
 
 int lib_bytes_size() {
   return BYTES_SIZE;
@@ -40,6 +42,10 @@ int lib_bytes_size() {
 
 int lib_hash_size() {
   return HASH_SIZE;
+}
+
+int lib_key_size() {
+  return KEY_SIZE;
 }
 
 int init_server_lib() {
@@ -101,10 +107,11 @@ int generate_b(unsigned char* v_bytes_in, unsigned char* b_bytes_out,
   return 0;
 }
 
-int generate_ss(unsigned char* A_bytes_in, unsigned char* b_bytes_in,
-		unsigned char* B_bytes_in, unsigned char* v_bytes_in,
-		unsigned char* ss_bytes_out, unsigned char* m1_bytes_out,
-		unsigned char* m2_bytes_out) {
+int generate_sk(const char* username_in, unsigned char* A_bytes_in,
+	        unsigned char* b_bytes_in, unsigned char* B_bytes_in,
+	        unsigned char* salt_bytes_in, unsigned char* v_bytes_in,
+	        unsigned char* k_bytes_out, unsigned char* m1_bytes_out,
+	        unsigned char* m2_bytes_out) {
   mpz_t A, b, B, v, u, ss;
   mpz_init(A);
   mpz_init(b);
@@ -133,18 +140,25 @@ int generate_ss(unsigned char* A_bytes_in, unsigned char* b_bytes_in,
   if (mpz_size(ss)*sizeof(mp_limb_t) > BYTES_SIZE) {
     return 1;
   }
-  mpz_export(ss_bytes_out, NULL, -1, 1, 0, 0, ss);
+  unsigned char ss_bytes[BYTES_SIZE];
+  mpz_export(ss_bytes, NULL, -1, 1, 0, 0, ss);
+
+  crypto_generichash_init(&h_state, NULL, 0, KEY_SIZE);
+  crypto_generichash_update(&h_state, ss_bytes, BYTES_SIZE);
+  crypto_generichash_final(&h_state, k_bytes_out, KEY_SIZE);
 
   crypto_generichash_init(&h_state, NULL, 0, HASH_SIZE);
+  crypto_generichash_update(&h_state, (const unsigned char*) username_in, strlen(username_in));
+  crypto_generichash_update(&h_state, salt_bytes_in, BYTES_SIZE);
   crypto_generichash_update(&h_state, A_bytes_in, BYTES_SIZE);
   crypto_generichash_update(&h_state, B_bytes_in, BYTES_SIZE);
-  crypto_generichash_update(&h_state, ss_bytes_out, BYTES_SIZE);
+  crypto_generichash_update(&h_state, k_bytes_out, KEY_SIZE);
   crypto_generichash_final(&h_state, m1_bytes_out, HASH_SIZE);
 
   crypto_generichash_init(&h_state, NULL, 0, HASH_SIZE);
   crypto_generichash_update(&h_state, A_bytes_in, BYTES_SIZE);
   crypto_generichash_update(&h_state, m1_bytes_out, HASH_SIZE);
-  crypto_generichash_update(&h_state, ss_bytes_out, BYTES_SIZE);
+  crypto_generichash_update(&h_state, k_bytes_out, KEY_SIZE);
   crypto_generichash_final(&h_state, m2_bytes_out, HASH_SIZE);
 
   return 0;

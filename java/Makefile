@@ -1,4 +1,4 @@
-LIB_NAME = liblogin_client.dylib
+LIB_NAME = liblogin_client.so
 
 default: jni_lib
 
@@ -8,7 +8,7 @@ default: jni_lib
 
 jni_lib:
 	@javac -h . com/stock_client_login/ClientBridge.java
-	@g++ -fPIC -I"$(JAVA_HOME)/include/" -I"$(JAVA_HOME)/include/darwin" -L"../cpp" -I"../cpp" -dynamiclib -lgmp -lsodium -o $(LIB_NAME) com_stock_client_login_ClientBridge.cpp ../cpp/client_login.cpp
+	@g++ -fPIC -I"$(JAVA_HOME)/include/" -I"$(JAVA_HOME)/include/linux" -L"../cpp" -I"../cpp" -shared -o $(LIB_NAME) com_stock_client_login_ClientBridge.cpp ../cpp/client_login.cpp -lgmp -lsodium
 
 test:
 	@javac com/stock_client_login/ClientBridgeTest.java

@@ -48,6 +48,9 @@ int test_client(int fd, int thread_num) {
   memcpy(buffer+size, v, size);
   write(fd, buffer, size*2);
 
+  write(fd, username, strlen(username)+1);
+  printf("Wrote s, v, and username\n");
+  
   unsigned char a[size];
   unsigned char A[size];
   memset(a, 0, sizeof(a));
@@ -60,24 +63,27 @@ int test_client(int fd, int thread_num) {
   memcpy(buffer, A, size);
   write(fd, buffer, size);
 
+  printf("Wrote A, waiting for B\n");
+  
   unsigned char B[size];
   read(fd, buffer, 1024);
   memcpy(B, buffer, size);
 
-  unsigned char cs[size];
+  unsigned char kc[lib_key_size()];
   unsigned char m1[hash_size];
   unsigned char m2[hash_size];
-  memset(cs, 0, sizeof(cs));
+  memset(kc, 0, sizeof(kc));
   memset(m1, 0, sizeof(m1));
   memset(m2, 0, sizeof(m2));
-  if (generate_cs(userpass, a, A, B, s, cs, m1, m2)) {
+  if (generate_ck(username, userpass, a, A, B, s, kc, m1, m2)) {
     printf("Thread %d s creation failed\n", thread_num);
     close(fd);
     return 1;
   }
   memcpy(buffer, m1, hash_size);
   write(fd, buffer, hash_size);
-
+  printf("Sent m1, waiting for m2\n");
+  
   unsigned char mv[hash_size];
   read(fd, buffer, 1024);
   memcpy(mv, buffer, hash_size);

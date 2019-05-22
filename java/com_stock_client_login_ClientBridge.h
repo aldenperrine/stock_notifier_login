@@ -25,6 +25,14 @@ JNIEXPORT jint JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1lib_1byte
 
 /*
  * Class:     com_stock_client_login_ClientBridge
+ * Method:    jni_lib_key_size
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1lib_1key_1size
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_stock_client_login_ClientBridge
  * Method:    jni_lib_hash_size
  * Signature: ()I
  */
@@ -49,11 +57,11 @@ JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1genera
 
 /*
  * Class:     com_stock_client_login_ClientBridge
- * Method:    jni_generate_cs
- * Signature: (Ljava/lang/String;[B[B[B[B)Lcom/stock_client_login/VerificationValues;
+ * Method:    jni_generate_ck
+ * Signature: (Ljava/lang/String;Ljava/lang/String;[B[B[B[B)Lcom/stock_client_login/VerificationValues;
  */
-JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1generate_1cs
-  (JNIEnv *, jclass, jstring, jbyteArray, jbyteArray, jbyteArray, jbyteArray);
+JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1generate_1ck
+  (JNIEnv *, jclass, jstring, jstring, jbyteArray, jbyteArray, jbyteArray, jbyteArray);
 
 #ifdef __cplusplus
 }

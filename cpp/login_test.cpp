@@ -68,20 +68,20 @@ int test_login() {
     return 1;
   }
 
-  unsigned char cs[size];
-  unsigned char ss[size];
+  unsigned char ks[lib_key_size()];
+  unsigned char kc[lib_key_size()];
   unsigned char cm1[lib_hash_size()];
   unsigned char cm2[lib_hash_size()];
   unsigned char sm1[lib_hash_size()];
   unsigned char sm2[lib_hash_size()];
-  memset(cs, 0, sizeof(cs));
-  memset(ss, 0, sizeof(ss));
+  memset(ks, 0, sizeof(ks));
+  memset(kc, 0, sizeof(kc));
 
-  if (generate_cs(userpass, a, A, B, s, cs, cm1, cm2)) {
+  if (generate_ck(username, userpass, a, A, B, s, kc, cm1, cm2)) {
     return 1;
   }
 
-  if (generate_ss(A, b, B, v, ss, sm1, sm2)) {
+  if (generate_sk(username, A, b, B, s, v, ks, sm1, sm2)) {
     return 1;
   }
 
@@ -93,7 +93,7 @@ int test_login() {
     return 1;
   }
 
-  return compare_hex(ss, cs, size);
+  return compare_hex(ks, kc, lib_key_size());
 }
 
 int main(int argc, char** argv) {

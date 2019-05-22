@@ -2,6 +2,10 @@
 
 #include <vector>
 #include <thread>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <mutex>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,6 +17,7 @@
 #include <unistd.h>
 
 const int NUM_TESTS = 100;
+std::mutex output_mutex;
 
 int compare_hex(unsigned char str1[], unsigned char str2[], size_t size) {
   for (int i = 0; i < size; ++i) {
@@ -21,6 +26,26 @@ int compare_hex(unsigned char str1[], unsigned char str2[], size_t size) {
     }
   }
   return 0;
+}
+
+std::string binary_conv(unsigned char* binary, size_t size) {
+  std::stringstream ss;
+  for (int i = 0; i < size; ++i) {
+    ss << std::hex << std::setfill('0') << std::setw(2) << (int) binary[i];
+  }
+  return ss.str();
+}
+
+
+
+int read_string(int fd, char* string, int max_size) {
+  char last_char[2] = "\0";
+  int loc = 0;
+  do {
+    read(fd, &last_char, 1);
+    string[loc++] = last_char[0];
+  } while(last_char[0] != '\0' && loc <= max_size);
+  return loc <= max_size ? 0 : 1;
 }
 
 int test_client(int fd, int thread_num) {
@@ -35,7 +60,15 @@ int test_client(int fd, int thread_num) {
 
   read(fd, buffer, size);
   memcpy(v, buffer, size);
-  
+
+  char username[size];
+  if (read_string(fd, username, size)) {
+    output_mutex.lock();
+    printf("Unable to process username\n");
+    output_mutex.unlock();
+    close(fd);
+    return 1;
+  }
 
   unsigned char A[size];
 
@@ -48,21 +81,25 @@ int test_client(int fd, int thread_num) {
   memset(b, 0, sizeof(b));
   memset(B, 0, sizeof(B));
   if (generate_b(v, b, B)) {
+    output_mutex.lock();
     printf("Thread %d b creation failed\n", thread_num);
+    output_mutex.unlock();
     close(fd);
     return 1;
   }
   memcpy(buffer, B, size);
   write(fd, buffer, size);
 
-  unsigned char ss[size];
+  unsigned char sk[lib_key_size()];
   unsigned char m1[hash_size];
   unsigned char m2[hash_size];
-  memset(ss, 0, sizeof(ss));
+  memset(sk, 0, sizeof(sk));
   memset(m1, 0, sizeof(m1));
   memset(m2, 0, sizeof(m2));
-  if (generate_ss(A, b, B, v, ss, m1, m2)) {
+  if (generate_sk(username, A, b, B, s, v, sk, m1, m2)) {
+    output_mutex.lock();
     printf("Thread %d s creation failed\n", thread_num);
+    output_mutex.unlock();
     close(fd);
     return 1;
   }
@@ -72,7 +109,11 @@ int test_client(int fd, int thread_num) {
   memcpy(mv, buffer, hash_size);
 
   if (compare_hex(mv, m1, hash_size)) {
+    output_mutex.lock();
     printf("Thread %d m validation failed\n", thread_num);
+    printf("INFO\n");
+    //std::cout << binary_conv() << std::endl;
+    output_mutex.unlock();
     close(fd);
     return 1;
   }
@@ -80,7 +121,9 @@ int test_client(int fd, int thread_num) {
   memcpy(buffer, m2, hash_size);
   write(fd, buffer, hash_size);
 
+  output_mutex.lock();
   printf("Thread %d finished\n", thread_num);
+  output_mutex.unlock();
   close(fd);
   return 0;
 }
