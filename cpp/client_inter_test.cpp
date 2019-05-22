@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-const int NUM_TESTS = 1;
+const int NUM_TESTS = 10;
 
 int compare_hex(unsigned char str1[], unsigned char str2[], size_t size) {
   for (int i = 0; i < size; ++i) {
@@ -26,6 +26,7 @@ int compare_hex(unsigned char str1[], unsigned char str2[], size_t size) {
 int test_client(int fd, int thread_num) {
   int size = lib_bytes_size();
   int hash_size = lib_hash_size();
+  int key_size = lib_key_size();
   unsigned char buffer[1024];
 
   char username[] = "username";
@@ -49,7 +50,6 @@ int test_client(int fd, int thread_num) {
   write(fd, buffer, size*2);
 
   write(fd, username, strlen(username)+1);
-  printf("Wrote s, v, and username\n");
   
   unsigned char a[size];
   unsigned char A[size];
@@ -63,30 +63,32 @@ int test_client(int fd, int thread_num) {
   memcpy(buffer, A, size);
   write(fd, buffer, size);
 
-  printf("Wrote A, waiting for B\n");
-  
   unsigned char B[size];
-  read(fd, buffer, 1024);
+  read(fd, buffer, size);
   memcpy(B, buffer, size);
 
-  unsigned char kc[lib_key_size()];
+  unsigned char n[key_size];
+  read(fd, n, key_size);
+
+  unsigned char kc[key_size];
+  unsigned char hv[key_size];
   unsigned char m1[hash_size];
   unsigned char m2[hash_size];
   memset(kc, 0, sizeof(kc));
   memset(m1, 0, sizeof(m1));
   memset(m2, 0, sizeof(m2));
-  if (generate_ck(username, userpass, a, A, B, s, kc, m1, m2)) {
+  memset(hv, 0, sizeof(hv));
+  if (generate_ck(username, userpass, a, A, B, s, n, kc, m1, m2, hv)) {
     printf("Thread %d s creation failed\n", thread_num);
     close(fd);
     return 1;
   }
   memcpy(buffer, m1, hash_size);
   write(fd, buffer, hash_size);
-  printf("Sent m1, waiting for m2\n");
+  write(fd, hv, key_size);
   
   unsigned char mv[hash_size];
-  read(fd, buffer, 1024);
-  memcpy(mv, buffer, hash_size);
+  read(fd, mv, hash_size);
   
   if (compare_hex(mv, m2, hash_size)) {
     printf("Thread %d m validation failed\n", thread_num);

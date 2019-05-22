@@ -16,7 +16,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-const int NUM_TESTS = 100;
+const int NUM_TESTS = 10;
 std::mutex output_mutex;
 
 int compare_hex(unsigned char str1[], unsigned char str2[], size_t size) {
@@ -51,6 +51,7 @@ int read_string(int fd, char* string, int max_size) {
 int test_client(int fd, int thread_num) {
   int size = lib_bytes_size();
   int hash_size = lib_hash_size();
+  int key_size = lib_key_size();
   unsigned char buffer[1024];
 
   unsigned char s[size];
@@ -78,9 +79,13 @@ int test_client(int fd, int thread_num) {
 
   unsigned char b[size];
   unsigned char B[size];
+  unsigned char n[key_size];
+  unsigned char h[key_size];
   memset(b, 0, sizeof(b));
   memset(B, 0, sizeof(B));
-  if (generate_b(v, b, B)) {
+  memset(n, 0, sizeof(n));
+  memset(h, 0, sizeof(h));
+    if (generate_b(v, b, B, n, h)) {
     output_mutex.lock();
     printf("Thread %d b creation failed\n", thread_num);
     output_mutex.unlock();
@@ -89,8 +94,9 @@ int test_client(int fd, int thread_num) {
   }
   memcpy(buffer, B, size);
   write(fd, buffer, size);
-
-  unsigned char sk[lib_key_size()];
+  write(fd, n, key_size);
+  
+  unsigned char sk[key_size];
   unsigned char m1[hash_size];
   unsigned char m2[hash_size];
   memset(sk, 0, sizeof(sk));
@@ -105,14 +111,22 @@ int test_client(int fd, int thread_num) {
   }
 
   unsigned char mv[hash_size];
-  read(fd, buffer, hash_size);
-  memcpy(mv, buffer, hash_size);
+  read(fd, mv, hash_size);
 
+  unsigned char hv[key_size];
+  read(fd, hv, key_size);
+
+  if (compare_hex(hv, h, key_size)) {
+    output_mutex.lock();
+    printf("Thread %d hash failed\n", thread_num);
+    output_mutex.unlock();
+    close(fd);
+    return 1;
+  }
+  
   if (compare_hex(mv, m1, hash_size)) {
     output_mutex.lock();
     printf("Thread %d m validation failed\n", thread_num);
-    printf("INFO\n");
-    //std::cout << binary_conv() << std::endl;
     output_mutex.unlock();
     close(fd);
     return 1;
