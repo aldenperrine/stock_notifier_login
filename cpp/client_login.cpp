@@ -121,11 +121,17 @@ int generate_a(unsigned char* a_bytes_out, unsigned char* A_bytes_out) {
   return 0;
 }
 
-int generate_ck(const char* username_in, const char* user_pass_in,
-	        const unsigned char* a_bytes_in, const unsigned char* A_bytes_in,
-	        const unsigned char* B_bytes_in, const unsigned char* salt_bytes_in,
-	        unsigned char* k_bytes_out, unsigned char* m1_bytes_out,
-	        unsigned char* m2_bytes_out) {
+int generate_ck(const char* username_in,
+		const char* user_pass_in,
+	        const unsigned char* a_bytes_in,
+		const unsigned char* A_bytes_in,
+	        const unsigned char* B_bytes_in,
+		const unsigned char* s_bytes_in,
+		const unsigned char* nonce_bytes_in,
+	        unsigned char* k_bytes_out,
+		unsigned char* m1_bytes_out,
+	        unsigned char* m2_bytes_out,
+		unsigned char* hn_bytes_out) {
   mpz_t a, A, B, u, x, cs, cb, ce;
   mpz_init(a);
   mpz_init(A);
@@ -148,12 +154,22 @@ int generate_ck(const char* username_in, const char* user_pass_in,
   
   unsigned char hash[HASH_SIZE];
   crypto_generichash_init(&h_state, NULL, 0, HASH_SIZE);
-  crypto_generichash_update(&h_state, (unsigned char*) salt_bytes_in, BYTES_SIZE);
+  crypto_generichash_update(&h_state, (unsigned char*) s_bytes_in, BYTES_SIZE);
   crypto_generichash_update(&h_state, (unsigned char*) user_pass_in, strlen(user_pass_in));
   crypto_generichash_final(&h_state, hash, sizeof hash);
   mpz_import(x, HASH_SIZE, -1, 1, 0, 0, hash);
 
   mpz_powm(cb, g, x, N);
+
+  unsigned char v_bytes[BYTES_SIZE];
+  mpz_export(v_bytes, NULL, -1, 1, 0, 0, cb);
+
+  crypto_generichash_state hs;
+  crypto_generichash_init(&hs, NULL, 0, KEY_SIZE);
+  crypto_generichash_update(&hs, v_bytes, BYTES_SIZE);
+  crypto_generichash_update(&hs, nonce_bytes_in, KEY_SIZE);
+  crypto_generichash_final(&hs, hn_bytes_out, KEY_SIZE);
+
   mpz_mul(cb, cb, k);
   mpz_sub(cb, B, cb);
   mpz_mod(cb, cb, N);
@@ -174,7 +190,7 @@ int generate_ck(const char* username_in, const char* user_pass_in,
   
   crypto_generichash_init(&h_state, NULL, 0, HASH_SIZE);
   crypto_generichash_update(&h_state, (const unsigned char*)username_in, strlen(username_in));
-  crypto_generichash_update(&h_state, salt_bytes_in, BYTES_SIZE);
+  crypto_generichash_update(&h_state, s_bytes_in, BYTES_SIZE);
   crypto_generichash_update(&h_state, A_bytes_in, BYTES_SIZE);
   crypto_generichash_update(&h_state, B_bytes_in, BYTES_SIZE);
   crypto_generichash_update(&h_state, k_bytes_out, KEY_SIZE);

@@ -84,8 +84,11 @@ int init_server_lib() {
   return 0;
 }
 
-int generate_b(unsigned char* v_bytes_in, unsigned char* b_bytes_out, 
-	       unsigned char* B_bytes_out) {
+int generate_b(unsigned char* v_bytes_in,
+	       unsigned char* b_bytes_out, 
+	       unsigned char* B_bytes_out,
+	       unsigned char* n_bytes_out,
+	       unsigned char* hn_bytes_out) {
   mpz_t v, b, B;
   mpz_init(b);
   mpz_init(B);
@@ -104,6 +107,14 @@ int generate_b(unsigned char* v_bytes_in, unsigned char* b_bytes_out,
     return 1;
   }
   mpz_export(B_bytes_out, NULL, -1, 1, 0, 0, B);
+
+  randombytes_buf(n_bytes_out, KEY_SIZE);
+  crypto_generichash_state h_state;
+  crypto_generichash_init(&h_state, NULL, 0, KEY_SIZE);
+  crypto_generichash_update(&h_state, v_bytes_in, BYTES_SIZE);
+  crypto_generichash_update(&h_state, n_bytes_out, KEY_SIZE);
+  crypto_generichash_final(&h_state, hn_bytes_out, KEY_SIZE);
+  
   return 0;
 }
 

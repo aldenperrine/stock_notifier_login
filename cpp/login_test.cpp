@@ -11,7 +11,7 @@
 
 std::string binary_conv(unsigned char* binary, size_t size) {
   std::stringstream ss;
-  for (int i = 1; i < size; ++i) {
+  for (int i = 0; i < size; ++i) {
     ss << std::hex << std::setfill('0') << std::setw(2) << (int) binary[i];
   }
   return ss.str();
@@ -62,22 +62,28 @@ int test_login() {
 
   unsigned char b[size];
   unsigned char B[size];
+  unsigned char n[lib_key_size()];
+  unsigned char h[lib_key_size()];
   memset(b, 0, sizeof(b));
   memset(B, 0, sizeof(B));
-  if (generate_b(v, b, B)) {
+  memset(n, 0, sizeof(n));
+  memset(h, 0, sizeof(h));
+  if (generate_b(v, b, B, n, h)) {
     return 1;
   }
 
+  unsigned char cv[size];
   unsigned char ks[lib_key_size()];
   unsigned char kc[lib_key_size()];
+  unsigned char ch[lib_key_size()];
   unsigned char cm1[lib_hash_size()];
   unsigned char cm2[lib_hash_size()];
   unsigned char sm1[lib_hash_size()];
   unsigned char sm2[lib_hash_size()];
   memset(ks, 0, sizeof(ks));
   memset(kc, 0, sizeof(kc));
-
-  if (generate_ck(username, userpass, a, A, B, s, kc, cm1, cm2)) {
+  memset(ch, 0, sizeof(ch));
+  if (generate_ck(username, userpass, a, A, B, s, n, kc, cm1, cm2, ch)) {
     return 1;
   }
 
@@ -93,13 +99,17 @@ int test_login() {
     return 1;
   }
 
+  if (compare_hex(h, ch, lib_key_size()) != 0) {
+    return 1;
+  }
+
   return compare_hex(ks, kc, lib_key_size());
 }
 
 int main(int argc, char** argv) {
-  for (int i = 0 ; i < 100; ++i) {
+  for (int i = 0 ; i < 1000; ++i) {
     if (test_login()) {
-      std::cout << "ERROR" << std::endl;
+      std::cout << "ERROR " << i << std::endl;
     }
   }
     
