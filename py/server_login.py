@@ -28,10 +28,14 @@ class ServerLoginLibrary:
         v = (c_ubyte * self.byte_size).from_buffer_copy(v_bytes)
         b = (c_ubyte * self.byte_size)()
         B = (c_ubyte * self.byte_size)()
-        self.server_lib.generate_b(v, b, B)
+        n = (c_ubyte * self.key_size)()
+        h = (c_ubyte * self.key_size)()
+        self.server_lib.generate_b(v, b, B, n, h)
         b_bytes = bytearray(b)
         B_bytes = bytearray(B)
-        return (b_bytes, B_bytes)
+        n_bytes = bytearray(n)
+        h_bytes = bytearray(h)
+        return (b_bytes, B_bytes, n_bytes, h_bytes)
 
     def generate_sk(self, un, A_bytes, b_bytes, B_bytes, s_bytes, v_bytes):
         username = c_char_p(un)
