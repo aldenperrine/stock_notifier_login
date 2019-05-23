@@ -82,10 +82,15 @@ JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1genera
 
 JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1generate_1ck
 (JNIEnv * env, jclass,
- jstring un, jstring up,
- jbyteArray aArray, jbyteArray AArray,
- jbyteArray BArray, jbyteArray sArray) {
+ jstring un,
+ jstring up,
+ jbyteArray aArray,
+ jbyteArray AArray,
+ jbyteArray BArray,
+ jbyteArray sArray,
+ jbyteArray nArray) {
   const int size = lib_hash_size();
+  const int key_size = lib_key_size();
   const char* user_pass = env->GetStringUTFChars(up, NULL);
   const char* username = env->GetStringUTFChars(un, NULL);
   
@@ -93,14 +98,16 @@ JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1genera
   jbyte* A = env->GetByteArrayElements(AArray, NULL);
   jbyte* B = env->GetByteArrayElements(BArray, NULL);
   jbyte* s = env->GetByteArrayElements(sArray, NULL);
+  jbyte* n = env->GetByteArrayElements(nArray, NULL);
   
-  
-  unsigned char sk[lib_key_size()];
+  unsigned char sk[key_size];
   unsigned char m1[size];
   unsigned char m2[size];
-
+  unsigned char hv[key_size];
+  
   if (generate_ck(username, user_pass, (unsigned char*) a, (unsigned char*) A,
-		  (unsigned char*) B, (unsigned char*) s, sk, m1, m2)) {
+		  (unsigned char*) B, (unsigned char*) s, (unsigned char*) n,
+		  sk, m1, m2, hv)) {
     return NULL;
   }
 
@@ -108,9 +115,10 @@ JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1genera
   env->ReleaseByteArrayElements(AArray, A, 0);
   env->ReleaseByteArrayElements(BArray, B, 0);
   env->ReleaseByteArrayElements(sArray, s, 0);
-
-  jbyteArray sk_array = env->NewByteArray(lib_key_size());
-  env->SetByteArrayRegion(sk_array, 0, lib_key_size(), (jbyte*) sk);
+  env->ReleaseByteArrayElements(nArray, n, 0);
+  
+  jbyteArray sk_array = env->NewByteArray(key_size);
+  env->SetByteArrayRegion(sk_array, 0, key_size, (jbyte*) sk);
   
   jbyteArray m1_array = env->NewByteArray(size);
   env->SetByteArrayRegion(m1_array, 0, size, (jbyte*) m1);
@@ -118,9 +126,12 @@ JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1genera
   jbyteArray m2_array = env->NewByteArray(size);
   env->SetByteArrayRegion(m2_array, 0, size, (jbyte*) m2);
 
+  jbyteArray hv_array = env->NewByteArray(key_size);
+  env->SetByteArrayRegion(hv_array, 0, key_size, (jbyte*) hv);
+  
   jclass r_ret_class = env->FindClass("com/stock_client_login/VerificationValues");
-  jmethodID construct = env->GetMethodID(r_ret_class, "<init>", "([B[B[B)V");
-  jobject retval = env->NewObject(r_ret_class, construct, sk_array, m1_array, m2_array);
+  jmethodID construct = env->GetMethodID(r_ret_class, "<init>", "([B[B[B[B)V");
+  jobject retval = env->NewObject(r_ret_class, construct, sk_array, m1_array, m2_array, hv_array);
 
   return retval;
 }

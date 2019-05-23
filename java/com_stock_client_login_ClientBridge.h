@@ -58,10 +58,10 @@ JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1genera
 /*
  * Class:     com_stock_client_login_ClientBridge
  * Method:    jni_generate_ck
- * Signature: (Ljava/lang/String;Ljava/lang/String;[B[B[B[B)Lcom/stock_client_login/VerificationValues;
+ * Signature: (Ljava/lang/String;Ljava/lang/String;[B[B[B[B[B)Lcom/stock_client_login/VerificationValues;
  */
 JNIEXPORT jobject JNICALL Java_com_stock_1client_1login_ClientBridge_jni_1generate_1ck
-  (JNIEnv *, jclass, jstring, jstring, jbyteArray, jbyteArray, jbyteArray, jbyteArray);
+  (JNIEnv *, jclass, jstring, jstring, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray);
 
 #ifdef __cplusplus
 }

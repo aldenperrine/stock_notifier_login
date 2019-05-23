@@ -10,7 +10,7 @@ public class ClientBridgeTest {
 	System.out.println("Starting client test...");
 	ClientBridge.jni_init_client_lib();
   
-	int NUM_TESTS = 98;
+	int NUM_TESTS = 10;
 	TestThread[] threads = new TestThread[NUM_TESTS];
 	for (int i = 0; i < NUM_TESTS; ++i) {
 	    threads[i] = new TestThread();
@@ -51,6 +51,7 @@ class TestThread extends Thread {
 	    String up = "username:password";
 	    int byteSize = ClientBridge.jni_lib_bytes_size();
 	    int hashSize = ClientBridge.jni_lib_hash_size();
+	    int keySize = ClientBridge.jni_lib_key_size();
 	    
 	    RegistrationValues rvals = ClientBridge.jni_generate_registration(up);
 	    AValues avals = ClientBridge.jni_generate_a();
@@ -65,12 +66,17 @@ class TestThread extends Thread {
 	    byte[] B = new byte[byteSize];
 	    in.readFully(B, 0, byteSize);
 
+	    byte[] n = new byte[keySize];
+	    in.readFully(n, 0, keySize);
+	    
 
 	    VerificationValues vvals = ClientBridge.jni_generate_ck(un, up, avals.a, avals.A,
-						   B, rvals.s);
+								    B, rvals.s, n);
 	    
 	    out.write(vvals.m1, 0, hashSize);
 
+	    out.write(vvals.hv, 0, keySize);
+	    
 	    byte[] mv = new byte[hashSize];
 	    in.readFully(mv, 0, hashSize);
 	    
