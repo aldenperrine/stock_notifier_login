@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-const int NUM_TESTS = 10;
+const int NUM_TESTS = 1;
 
 int compare_hex(unsigned char str1[], unsigned char str2[], size_t size) {
   for (int i = 0; i < size; ++i) {

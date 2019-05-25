@@ -10,7 +10,7 @@ public class ClientBridgeTest {
 	System.out.println("Starting client test...");
 	ClientBridge.jni_init_client_lib();
   
-	int NUM_TESTS = 10;
+	int NUM_TESTS = 1;
 	TestThread[] threads = new TestThread[NUM_TESTS];
 	for (int i = 0; i < NUM_TESTS; ++i) {
 	    threads[i] = new TestThread();
@@ -56,29 +56,34 @@ class TestThread extends Thread {
 	    RegistrationValues rvals = ClientBridge.jni_generate_registration(up);
 	    AValues avals = ClientBridge.jni_generate_a();
 	    
-	    out.write(rvals.s, 0, byteSize);
-	    out.write(rvals.v, 0, byteSize);
+	    out.write(ClientBridge.bytesToHex(rvals.s).getBytes(StandardCharsets.US_ASCII), 0, byteSize*2);
+	    out.write(ClientBridge.bytesToHex(rvals.v).getBytes(StandardCharsets.US_ASCII), 0, byteSize*2);
 	    out.write(user_bytes, 0, user_bytes.length);
 	    out.write(null_byte, 0, 1);
-	    out.write(avals.A, 0, byteSize);
+	    out.write(ClientBridge.bytesToHex(avals.A).getBytes(StandardCharsets.US_ASCII), 0, byteSize*2);
 	    
 
-	    byte[] B = new byte[byteSize];
-	    in.readFully(B, 0, byteSize);
-
-	    byte[] n = new byte[keySize];
-	    in.readFully(n, 0, keySize);
+	    byte[] BHex = new byte[byteSize*2];
+	    in.readFully(BHex, 0, byteSize*2);
+	    String BStr = new String(BHex);
 	    
+	    byte[] nHex = new byte[keySize*2];
+	    in.readFully(nHex, 0, keySize*2);
+	    String nStr = new String(nHex);
 
 	    VerificationValues vvals = ClientBridge.jni_generate_ck(un, up, avals.a, avals.A,
-								    B, rvals.s, n);
+								    ClientBridge.hexToBytes(BStr),
+								    rvals.s,
+								    ClientBridge.hexToBytes(nStr));
 	    
-	    out.write(vvals.m1, 0, hashSize);
+	    out.write(ClientBridge.bytesToHex(vvals.m1).getBytes(StandardCharsets.US_ASCII), 0, hashSize*2);
 
-	    out.write(vvals.hv, 0, keySize);
+	    out.write(ClientBridge.bytesToHex(vvals.hv).getBytes(StandardCharsets.US_ASCII), 0, keySize*2);
 	    
-	    byte[] mv = new byte[hashSize];
-	    in.readFully(mv, 0, hashSize);
+	    byte[] mvHex = new byte[hashSize*2];
+	    in.readFully(mvHex, 0, hashSize*2);
+	    byte[] mv = ClientBridge.hexToBytes(new String(mvHex));
+	    
 	    
 	    System.out.println(Arrays.equals(mv, vvals.m2));
 	

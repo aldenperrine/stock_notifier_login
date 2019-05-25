@@ -2,6 +2,8 @@ from ctypes import *
 import binascii
 
 class ServerLoginLibrary:
+    __hexArray = "0123456789ABCDEF"
+
     def __init__(self):
         self.server_lib = CDLL("../cpp/server_lib.so")
         self.byte_size = 0
@@ -38,7 +40,8 @@ class ServerLoginLibrary:
         return (b_bytes, B_bytes, n_bytes, h_bytes)
 
     def generate_sk(self, un, A_bytes, b_bytes, B_bytes, s_bytes, v_bytes):
-        username = c_char_p(un)
+        username = (c_char * 80).from_buffer(un)
+        up = c_char_p(addressof(username))
         A = (c_ubyte * self.byte_size).from_buffer_copy(A_bytes)
         b = (c_ubyte * self.byte_size).from_buffer_copy(b_bytes)
         B = (c_ubyte * self.byte_size).from_buffer_copy(B_bytes)
@@ -52,3 +55,9 @@ class ServerLoginLibrary:
         m1_bytes = bytearray(m1)
         m2_bytes = bytearray(m2)
         return (sk_bytes, m1_bytes, m2_bytes)
+
+    def bytesToHex(self, data):
+        return ''.join(format(d, '02x') for d in data)
+
+    def hexToBytes(self, string):
+        return bytearray.fromhex(string)
