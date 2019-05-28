@@ -1,10 +1,23 @@
 #include "server_login.h"
 
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+
 #include <mutex>
 #include <stdint.h>
 #include <string.h>
 #include <gmp.h>
 #include <sodium.h>
+
+std::string binary_conv(unsigned char* binary, size_t size) {
+  std::stringstream ss;
+  for (int i = 0; i < size; ++i) {
+    ss << std::hex << std::setfill('0') << std::setw(2) << (int) binary[i];
+  }
+  return ss.str();
+}
+
 
 /* From RFC5114 */
 const uint32_t prime[32] = {0xB10B8F96, 0xA080E01D, 0xDE92DE5E, 0xAE5D54EC,
@@ -64,6 +77,9 @@ int init_server_lib() {
   mpz_init(N);
   mpz_import(N, 32, 1, 4, 0, 0, prime);
 
+  unsigned char nb[BYTES_SIZE];
+  mpz_export(nb, NULL, -1, 1, 0, 0, N);
+  
   /* Initialize g, the generator for the group */
   mpz_init(g);
   mpz_import(g, 32, 1, 4, 0, 0, gener);
