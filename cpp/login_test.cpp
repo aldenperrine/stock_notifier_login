@@ -29,14 +29,6 @@ int compare_hex(unsigned char str1[], unsigned char str2[], size_t size) {
 int test_login() {
   int size = lib_bytes_size();
 
-  if (init_server_lib()) {
-    return 1;
-  }
-
-  if (init_client_lib()) {
-    return 1;
-  }
-
   char username[] = "username";
   char password[] = "password";
   char userpass[80];
@@ -72,6 +64,7 @@ int test_login() {
     return 1;
   }
 
+  unsigned char vm[size];
   unsigned char cv[size];
   unsigned char ks[lib_key_size()];
   unsigned char kc[lib_key_size()];
@@ -100,6 +93,21 @@ int test_login() {
   }
 
   if (compare_hex(h, ch, lib_key_size()) != 0) {
+    std::cout << "Hash issue" << std::endl;
+    std::cout << binary_conv(h, 32) << std::endl;
+    std::cout << binary_conv(ch, 32) << std::endl;
+
+    unsigned char hr[32];
+    crypto_generichash_state h_state;
+    crypto_generichash_init(&h_state, NULL, 0, lib_key_size());
+    crypto_generichash_update(&h_state, v, size);
+    crypto_generichash_update(&h_state, n, 32);
+    crypto_generichash_final(&h_state, hr, lib_key_size());
+    std::cout << binary_conv(hr, 32) << std::endl;
+
+    std::cout << binary_conv(v, 128) << std::endl;
+    std::cout << binary_conv(vm, 128) << std::endl;
+    
     return 1;
   }
 
@@ -107,6 +115,14 @@ int test_login() {
 }
 
 int main(int argc, char** argv) {
+  if (init_server_lib()) {
+    return 1;
+  }
+
+  if (init_client_lib()) {
+    return 1;
+  }
+
   for (int i = 0 ; i < 1000; ++i) {
     if (test_login()) {
       std::cout << "ERROR " << i << std::endl;

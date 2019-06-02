@@ -79,6 +79,7 @@ int init_server_lib() {
 
   unsigned char nb[BYTES_SIZE];
   mpz_export(nb, NULL, -1, 1, 0, 0, N);
+  std::cout << binary_conv(nb, BYTES_SIZE) << std::endl;
   
   /* Initialize g, the generator for the group */
   mpz_init(g);
