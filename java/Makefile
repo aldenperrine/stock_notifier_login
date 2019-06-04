@@ -13,5 +13,8 @@ jni_lib:
 test:
 	@javac com/stock_client_login/ClientBridgeTest.java
 
+crypto:
+	javac com/stock_client_login/ClientCrypto.java
+
 clean:
 	@rm -rf *~ com/stock_client_login/*.class liblogin_client.dylib com/stock_client_login/*~
